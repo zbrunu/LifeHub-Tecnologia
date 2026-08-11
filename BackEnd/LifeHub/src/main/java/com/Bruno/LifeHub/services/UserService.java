@@ -1,0 +1,54 @@
+package com.Bruno.LifeHub.services;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.Bruno.LifeHub.dto.UserDTO;
+import com.Bruno.LifeHub.dto.UserInsertDTO;
+import com.Bruno.LifeHub.entities.User;
+import com.Bruno.LifeHub.repositories.UserRepository;
+import com.Bruno.LifeHub.resources.exceptions.ResourceNotFoundException;
+
+@Service
+public class UserService {
+
+    private final UserRepository repository;
+
+    public UserService(UserRepository repository) {
+        this.repository = repository;
+    }
+
+    @Transactional(readOnly = true)
+    public UserDTO findByEmail(String email) {
+        User result = repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
+
+        return new UserDTO(result);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDTO> findAllPaged(Pageable pageable) {
+        Page<User> list = repository.findAll(pageable);
+        return list.map(UserDTO::new);
+    }
+
+    @Transactional
+    public UserDTO insert(UserInsertDTO dto) {
+
+        if (repository.existsByEmail(dto.getEmail())) {
+            throw new DataIntegrityViolationException("Email already exists");
+        }
+
+        User user = new User();
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setPassword(dto.getPassword());
+
+        user = repository.save(user);
+
+        return new UserDTO(user);
+    }
+}
