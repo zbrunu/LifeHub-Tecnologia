@@ -1,6 +1,5 @@
 package com.Bruno.LifeHub.services;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,7 +10,8 @@ import com.Bruno.LifeHub.dto.UserDTO;
 import com.Bruno.LifeHub.dto.UserInsertDTO;
 import com.Bruno.LifeHub.entities.User;
 import com.Bruno.LifeHub.repositories.UserRepository;
-import com.Bruno.LifeHub.resources.exceptions.ResourceNotFoundException;
+import com.Bruno.LifeHub.services.exceptions.EmailAlreadyExistsException;
+import com.Bruno.LifeHub.services.exceptions.ResourceNotFoundException;
 
 @Service
 public class UserService {
@@ -33,8 +33,7 @@ public class UserService {
 	@Transactional(readOnly = true)
 	public UserDTO findByEmail(String email) {
 		User result = repository.findByEmail(email)
-				.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
-
+				.orElseThrow(() -> new ResourceNotFoundException("Entidade não encontrada"));
 		return new UserDTO(result);
 	}
 
@@ -42,7 +41,7 @@ public class UserService {
 	public UserDTO insert(UserInsertDTO dto) {
 
 		if (repository.existsByEmail(dto.getEmail())) {
-			throw new DataIntegrityViolationException("Email already exists");
+			throw new EmailAlreadyExistsException("Email já existe");
 		}
 
 		User user = new User();
