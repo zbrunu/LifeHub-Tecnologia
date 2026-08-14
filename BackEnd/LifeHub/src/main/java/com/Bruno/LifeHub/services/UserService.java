@@ -3,6 +3,7 @@ package com.Bruno.LifeHub.services;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,40 +16,42 @@ import com.Bruno.LifeHub.resources.exceptions.ResourceNotFoundException;
 @Service
 public class UserService {
 
-    private final UserRepository repository;
+	private final UserRepository repository;
+	private final PasswordEncoder passwordEnconder;
 
-    public UserService(UserRepository repository) {
-        this.repository = repository;
-    }
+	public UserService(UserRepository repository, PasswordEncoder passwordEnconder) {
+		this.repository = repository;
+		this.passwordEnconder = passwordEnconder;
+	}
 
-    @Transactional(readOnly = true)
-    public UserDTO findByEmail(String email) {
-        User result = repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
+	@Transactional(readOnly = true)
+	public Page<UserDTO> findAllPaged(Pageable pageable) {
+		Page<User> list = repository.findAll(pageable);
+		return list.map(UserDTO::new);
+	}
 
-        return new UserDTO(result);
-    }
+	@Transactional(readOnly = true)
+	public UserDTO findByEmail(String email) {
+		User result = repository.findByEmail(email)
+				.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
 
-    @Transactional(readOnly = true)
-    public Page<UserDTO> findAllPaged(Pageable pageable) {
-        Page<User> list = repository.findAll(pageable);
-        return list.map(UserDTO::new);
-    }
+		return new UserDTO(result);
+	}
 
-    @Transactional
-    public UserDTO insert(UserInsertDTO dto) {
+	@Transactional
+	public UserDTO insert(UserInsertDTO dto) {
 
-        if (repository.existsByEmail(dto.getEmail())) {
-            throw new DataIntegrityViolationException("Email already exists");
-        }
+		if (repository.existsByEmail(dto.getEmail())) {
+			throw new DataIntegrityViolationException("Email already exists");
+		}
 
-        User user = new User();
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
+		User user = new User();
+		user.setName(dto.getName());
+		user.setEmail(dto.getEmail());
+		user.setPassword(passwordEnconder.encode(dto.getPassword()));
 
-        user = repository.save(user);
+		user = repository.save(user);
 
-        return new UserDTO(user);
-    }
+		return new UserDTO(user);
+	}
 }
