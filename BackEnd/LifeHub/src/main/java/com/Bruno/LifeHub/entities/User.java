@@ -2,8 +2,12 @@ package com.Bruno.LifeHub.entities;
 
 import java.io.Serializable;
 
+import com.Bruno.LifeHub.enums.Role;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,5 +39,8 @@ public class User implements Serializable {
 
     @Column(nullable = false)
     private String password;
+    
+    @Enumerated(EnumType.STRING)
+    private Role role;
 }
 
